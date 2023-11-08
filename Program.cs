@@ -13,11 +13,7 @@ class Consumer
 
     static void Main(string[] args)
     {
-        if (args.Length != 1)
-        {
-            Console.WriteLine("Please provide the configuration file path as a command line argument");
-        }
-
+        Console.WriteLine("Initializing...");
         var configuration = new Dictionary<string, string>
         {
             {"bootstrap-server", KAFKA_SERVER},
