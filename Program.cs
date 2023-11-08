@@ -34,7 +34,7 @@ class Consumer
                 while (true)
                 {
                     var cr = consumer.Consume(cts.Token);
-                    Console.WriteLine($"Consumed event from topic {KAFKA_TOPIC}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
+                    Console.WriteLine($"Consumed event from topic: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
                 }
             }
             catch (OperationCanceledException)
