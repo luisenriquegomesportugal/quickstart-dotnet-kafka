@@ -3,27 +3,19 @@ using Microsoft.Extensions.Configuration;
 
 class Consumer
 {
-
-    static string KAFKA_SERVER = $"{Environment.GetEnvironmentVariable("KAFKA_SERVER")}";
-    static string KAFKA_TOPIC = $"{Environment.GetEnvironmentVariable("KAFKA_TOPIC")}";
-    static string KAFKA_GROUP = $"{Environment.GetEnvironmentVariable("KAFKA_GROUP")}";
-    static string KEYSTORE_LOCATION = $"{Environment.GetEnvironmentVariable("SSL_LOCATION")}";
-    static string KEYSTORE_PASSWORD = $"{Environment.GetEnvironmentVariable("SSL_PASSWORD")}";
-    static string SASL_CONFIG = $"{Environment.GetEnvironmentVariable("SASL_CONFIG")}";
-
     static void Main(string[] args)
     {
         Console.WriteLine("Initializing...");
         var configuration = new Dictionary<string, string>
         {
-            {"bootstrap-server", KAFKA_SERVER},
+            {"bootstrap-server", "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443"},
             {"security.protocol", "SASL_SSL"},
-            {"ssl.truststore.location", KEYSTORE_LOCATION},
-            {"ssl.truststore.password", KEYSTORE_PASSWORD},
+            {"ssl.truststore.location", "./ca.p12"},
+            {"ssl.truststore.password", "fX95Ovo90ZEW"},
             {"ssl.enabled.protocols", "TLSv1.2,TLSv1.1,TLSv1"},
             {"sasl.mechanism", "SCRAM-SHA-512"},
-            {"sasl.jaas.config", SASL_CONFIG},
-            {"group.id", KAFKA_GROUP},
+            {"sasl.jaas.config", "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"sofintech-kafka\" password=\"F3Si8w05cCP6k8AQNtO9W67rDI2Te6uG\";"},
+            {"group.id", "teste-nao-produtivo-group"},
             {"auto.offset.reset", "earliest"}
         };
 
@@ -36,7 +28,7 @@ class Consumer
 
         using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
         {
-            consumer.Subscribe(KAFKA_TOPIC);
+            consumer.Subscribe("teste-nao-produtivo");
             try
             {
                 while (true)
