@@ -6,8 +6,8 @@ class Consumer
 
     static string KAFKA_SERVER = $"{Environment.GetEnvironmentVariable("KAFKA_SERVER")}";
     static string KAFKA_TOPIC = $"{Environment.GetEnvironmentVariable("KAFKA_TOPIC")}";
+    static string KAFKA_GROUP = $"{Environment.GetEnvironmentVariable("KAFKA_GROUP")}";
     static string KEYSTORE_LOCATION = $"{Environment.GetEnvironmentVariable("SSL_LOCATION")}";
-    //static string KEYSTORE_LOCATION = "../src/Keystore/ca.p12";
     static string KEYSTORE_PASSWORD = $"{Environment.GetEnvironmentVariable("SSL_PASSWORD")}";
     static string SASL_CONFIG = $"{Environment.GetEnvironmentVariable("SASL_CONFIG")}";
 
@@ -27,6 +27,8 @@ class Consumer
             {"ssl.enabled.protocols", "TLSv1.2,TLSv1.1,TLSv1"},
             {"sasl.mechanism", "SCRAM-SHA-512"},
             {"sasl.jaas.config", SASL_CONFIG},
+            {"group.id", KAFKA_GROUP},
+            {"auto.offset.reset", "earliest"}
         };
 
         CancellationTokenSource cts = new CancellationTokenSource();
