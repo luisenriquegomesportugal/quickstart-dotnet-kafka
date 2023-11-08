@@ -10,7 +10,7 @@ class Consumer
         var configuration = new Dictionary<string, string>();
         configuration.Add("bootstrap.servers", "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443");
         configuration.Add("security.protocol", "SASL_SSL");
-        configuration.Add("ssl.truststore.location", "./ca.p12");
+        configuration.Add("ssl.ca.location", "./ca.p12");
         configuration.Add("ssl.truststore.password", "fX95Ovo90ZEW");
         configuration.Add("ssl.enabled.protocols", "TLSv1.2,TLSv1.1,TLSv1");
         configuration.Add("sasl.mechanism", "SCRAM-SHA-512");
