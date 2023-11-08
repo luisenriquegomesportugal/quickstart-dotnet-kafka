@@ -14,8 +14,8 @@ class Consumer
         configuration.Add("auto.offset.reset", "earliest");
         configuration.Add("security.protocol", "SASL_SSL");
         
-        X509Certificate2 cert = X509Certificate2("/opt/app-root/src/ca.p12", "fX95Ovo90ZEW");
-        configuration.Add("ssl.ca.pem", cert.ExportCertificatePem());
+        X509Certificate2 cert = new X509Certificate2("/opt/app-root/src/ca.p12", "fX95Ovo90ZEW");
+        configuration.Add("ssl.ca.pem", cert.GetPublicKeyString());
         
         //configuration.Add("ssl.truststore.password", "fX95Ovo90ZEW");
         //configuration.Add("ssl.enabled.protocols", "TLSv1.2,TLSv1.1,TLSv1");
