@@ -14,10 +14,12 @@ class Consumer
         configuration.Add("auto.offset.reset", "earliest");
         configuration.Add("security.protocol", "SASL_SSL");
         
-        X509Certificate2 cert = new X509Certificate2("/opt/app-root/src/ca.p12", "fX95Ovo90ZEW");
-        configuration.Add("ssl.ca.pem", cert.GetPublicKeyString());
+        //X509Certificate2 cert = new X509Certificate2("/opt/app-root/src/ca.p12", "fX95Ovo90ZEW");
+        //configuration.Add("ssl.ca.pem", cert.GetPublicKeyString());
         
-        //configuration.Add("ssl.truststore.password", "fX95Ovo90ZEW");
+        configuration.Add("ssl.keystore.location", "/opt/app-root/src/ca.p12");
+        configuration.Add("ssl.keystore.password", "fX95Ovo90ZEW");
+        
         //configuration.Add("ssl.enabled.protocols", "TLSv1.2,TLSv1.1,TLSv1");
         configuration.Add("sasl.mechanism", "SCRAM-SHA-512");
         configuration.Add("sasl.username", "sofintech-kafka");
