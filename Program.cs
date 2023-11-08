@@ -12,7 +12,7 @@ class Consumer
         configuration.Add("bootstrap.servers", "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443");
         configuration.Add("group.id", "teste-nao-produtivo-group");
         configuration.Add("auto.offset.reset", "earliest");
-        configuration.Add("security.protocol", "SASL_SSL");
+        configuration.Add("security.protocol", "SSL");
         
         //X509Certificate2 cert = new X509Certificate2("/opt/app-root/src/ca.p12", "fX95Ovo90ZEW");
         //configuration.Add("ssl.ca.pem", cert.GetPublicKeyString());
