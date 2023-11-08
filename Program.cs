@@ -8,7 +8,7 @@ class Consumer
         Console.WriteLine("Initializing...");
         
         var configuration = new Dictionary<string, string>();
-        configuration.Add("bootstrap-server", "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443");
+        configuration.Add("bootstrap.servers", "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443");
         configuration.Add("security.protocol", "SASL_SSL");
         configuration.Add("ssl.truststore.location", "./ca.p12");
         configuration.Add("ssl.truststore.password", "fX95Ovo90ZEW");
