@@ -26,7 +26,7 @@ class Consumer
             BootstrapServers = "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443",
             GroupId = "teste-nao-produtivo-group",
             SecurityProtocol = SecurityProtocol.SaslSsl,
-            SslCertificateLocation = "/opt/app-root/src/ca.crt",  
+            SslCaLocation = "/opt/app-root/src/ca.crt",  
             SaslMechanism = SaslMechanism.ScramSha512,
             SaslUsername = "sofintech-kafka",
             SaslPassword = "F3Si8w05cCP6k8AQNtO9W67rDI2Te6uG",      
