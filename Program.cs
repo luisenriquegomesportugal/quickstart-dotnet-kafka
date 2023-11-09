@@ -1,6 +1,4 @@
-﻿using System.Security.Authentication;
-using Confluent.Kafka;
-using Microsoft.Extensions.Configuration;
+﻿using Confluent.Kafka;
 
 class Consumer
 {
