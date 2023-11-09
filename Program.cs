@@ -15,8 +15,8 @@ class Consumer
         configuration.Add("security.protocol", "SASL_SSL");
         configuration.Add("group.id", "teste-nao-produtivo-group");
         
-        configuration.Add("ssl.keystore.location", "/opt/app-root/src/ca.p12");
-        configuration.Add("ssl.keystore.password", "HQL8lcZ18o4x");
+        configuration.Add("ssl.key.location", "/opt/app-root/src/ca.crt");
+        configuration.Add("ssl.key.password", "HQL8lcZ18o4x");
         
         configuration.Add("sasl.mechanism", "SCRAM-SHA-512");
         configuration.Add("sasl.username", "sofintech-kafka");
