@@ -4,32 +4,26 @@ using Microsoft.Extensions.Configuration;
 
 class Consumer
 {
+    static string KAFKA_SERVER = $"{Environment.GetEnvironmentVariable("KAFKA_SERVER")}";
+    static string KAFKA_GROUP = $"{Environment.GetEnvironmentVariable("KAFKA_GROUP")}";
+    static string KAFKA_TOPIC = $"{Environment.GetEnvironmentVariable("KAFKA_TOPIC")}";
+    static string KAFKA_CERT_LOCATION = $"{Environment.GetEnvironmentVariable("KAFKA_CERT_LOCATION")}";
+    static string KAFKA_USERNAME = $"{Environment.GetEnvironmentVariable("KAFKA_USERNAME")}";
+    static string KAFKA_PASSWORD = $"{Environment.GetEnvironmentVariable("KAFKA_PASSWORD")}";
+
     static void Main(string[] args)
     {
         Console.WriteLine("Initializing...");
-        
-        // var configuration = new Dictionary<string, string>();
-        // configuration.Add("bootstrap.servers", "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443");
-        // configuration.Add("auto.offset.reset", "earliest");
-        // configuration.Add("security.protocol", "SASL_SSL");
-        // configuration.Add("group.id", "teste-nao-produtivo-group");
-        
-        // configuration.Add("ssl.key.location", "/opt/app-root/src/ca.crt");
-        // configuration.Add("ssl.key.password", "HQL8lcZ18o4x");
-        
-        // configuration.Add("sasl.mechanism", "SCRAM-SHA-512");
-        // configuration.Add("sasl.username", "sofintech-kafka");
-        // configuration.Add("sasl.password", "F3Si8w05cCP6k8AQNtO9W67rDI2Te6uG");
 
         var configuration = new ConsumerConfig {
             AutoOffsetReset = AutoOffsetReset.Earliest,    
-            BootstrapServers = "instance-kafka-bootstrap-kafka.apps.ocp.desenv.com:443",
-            GroupId = "teste-nao-produtivo-group",
+            BootstrapServers = KAFKA_SERVER,
+            GroupId = KAFKA_GROUP,
             SecurityProtocol = SecurityProtocol.SaslSsl,
-            SslCaLocation = "/opt/app-root/src/ca.crt",  
+            SslCaLocation = KAFKA_CERT_LOCATION,  
             SaslMechanism = SaslMechanism.ScramSha512,
-            SaslUsername = "sofintech-kafka",
-            SaslPassword = "F3Si8w05cCP6k8AQNtO9W67rDI2Te6uG",      
+            SaslUsername = KAFKA_USERNAME,
+            SaslPassword = KAFKA_PASSWORD,      
         };
 
         CancellationTokenSource cts = new CancellationTokenSource();
@@ -40,8 +34,12 @@ class Consumer
         };
 
         using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
-        {
-            consumer.Subscribe("teste-nao-produtivo");
+        {    
+            Console.WriteLine("Conectado...");
+
+            consumer.Subscribe(KAFKA_TOPIC);
+            Console.WriteLine("Ouvindo...");
+
             try
             {
                 while (true)
