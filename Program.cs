@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 class Consumer
@@ -14,17 +15,12 @@ class Consumer
         configuration.Add("security.protocol", "SASL_SSL");
         configuration.Add("group.id", "teste-nao-produtivo-group");
         
-        //X509Certificate2 cert = new X509Certificate2("/opt/app-root/src/ca.p12", "fX95Ovo90ZEW");
-        //configuration.Add("ssl.ca.pem", cert.GetPublicKeyString());
+        configuration.Add("ssl.keystore.location", "/opt/app-root/src/ca.p12");
+        configuration.Add("ssl.keystore.password", "HQL8lcZ18o4x");
         
-        configuration.Add("ssl.ca.pem", "/opt/app-root/src/ca.pem");
-        //configuration.Add("ssl.keystore.password", "fX95Ovo90ZEW");
-        
-        //configuration.Add("ssl.enabled.protocols", "TLSv1.2,TLSv1.1,TLSv1");
         configuration.Add("sasl.mechanism", "SCRAM-SHA-512");
         configuration.Add("sasl.username", "sofintech-kafka");
         configuration.Add("sasl.password", "F3Si8w05cCP6k8AQNtO9W67rDI2Te6uG");
-        //configuration.Add("sasl.jaas.config", "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"sofintech-kafka\" password=\"F3Si8w05cCP6k8AQNtO9W67rDI2Te6uG\";");
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
