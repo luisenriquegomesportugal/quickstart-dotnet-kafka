@@ -39,13 +39,6 @@ class Consumer
             SaslPassword = KAFKA_PASSWORD
         };
 
-        CancellationTokenSource cts = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) =>
-        {
-            e.Cancel = true;
-            cts.Cancel();
-        };
-
         using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
         using var producer = new ProducerBuilder<string, string>(producerConfig).Build();
 
@@ -55,60 +48,61 @@ class Consumer
             consumer.Subscribe(KAFKA_TOPIC);
             Console.WriteLine($"[SUBSCRIBE] Ouvindo o tópico: {KAFKA_TOPIC}");
 
-            // 🟢 Mensagem inicial automática
-            var startupMessage = $"[STARTUP] Consumidor iniciado às {DateTime.Now:HH:mm:ss}";
-            Console.WriteLine($"[PRODUCE] Enviando mensagem inicial: {startupMessage}");
-
-            var dr = await producer.ProduceAsync(KAFKA_TOPIC, new Message<string, string>
-            {
-                Key = "startup",
-                Value = startupMessage
-            }, cts.Token);
-
-            Console.WriteLine($"[DELIVERED] Mensagem inicial publicada em {dr.TopicPartitionOffset}");
-
-            // 🔁 Loop principal
-            while (!cts.Token.IsCancellationRequested)
+            // 🔁 Tarefa para consumir mensagens (paralelamente)
+            var cts = new CancellationTokenSource();
+            var consumeTask = Task.Run(() =>
             {
                 try
                 {
-                    var cr = consumer.Consume(cts.Token);
-
-                    Console.WriteLine($"[MESSAGE RECEIVED] Offset: {cr.Offset}, Key: {cr.Message.Key ?? "(null)"}, Value: {cr.Message.Value}");
-
-                    // Espera 5 segundos
-                    Console.WriteLine("[WAIT] Aguardando 5 segundos antes de publicar resposta...");
-                    await Task.Delay(5000, cts.Token);
-
-                    var newMessage = $"(Echo) [{DateTime.Now:HH:mm:ss}] -> {cr.Message.Value}";
-                    Console.WriteLine($"[PRODUCE] Enviando mensagem de resposta: {newMessage}");
-
-                    var response = await producer.ProduceAsync(KAFKA_TOPIC, new Message<string, string>
+                    while (!cts.Token.IsCancellationRequested)
                     {
-                        Key = cr.Message.Key,
-                        Value = newMessage
-                    }, cts.Token);
+                        var cr = consumer.Consume(cts.Token);
+                        if (cr?.Message != null)
+                        {
+                            Console.WriteLine($"[MESSAGE RECEIVED] Offset: {cr.Offset}, Key: {cr.Message.Key ?? "(null)"}, Value: {cr.Message.Value}");
+                            cts.Cancel(); // Encerra após primeira mensagem
+                            break;
+                        }
+                    }
+                }
+                catch (OperationCanceledException) { /* esperado */ }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR][CONSUME] {ex.Message}");
+                }
+            });
 
-                    Console.WriteLine($"[DELIVERED] Resposta publicada em {response.TopicPartitionOffset}");
-                }
-                catch (ConsumeException ex)
-                {
-                    Console.WriteLine($"[ERROR][CONSUME] {ex.Error.Reason}");
-                }
-                catch (ProduceException<string, string> ex)
-                {
-                    Console.WriteLine($"[ERROR][PRODUCE] Falha ao enviar mensagem: {ex.Error.Reason}");
-                }
-                catch (TaskCanceledException)
-                {
-                    Console.WriteLine("[CANCEL] Operação cancelada.");
-                    break;
-                }
+            // ⏱️ Espera 5 segundos antes de enviar a mensagem
+            Console.WriteLine("[WAIT] Aguardando 5 segundos antes de enviar mensagem...");
+            await Task.Delay(5000);
+
+            var message = $"[AUTO] Mensagem enviada automaticamente às {DateTime.UtcNow:O}";
+            Console.WriteLine($"[PRODUCE] Enviando mensagem: {message}");
+
+            var dr = await producer.ProduceAsync(KAFKA_TOPIC, new Message<string, string>
+            {
+                Key = "auto",
+                Value = message
+            });
+
+            Console.WriteLine($"[DELIVERED] Mensagem publicada em {dr.TopicPartitionOffset}");
+
+            // 🔚 Aguarda até receber uma mensagem ou tempo limite
+            await Task.WhenAny(consumeTask, Task.Delay(30000));
+
+            if (!consumeTask.IsCompleted)
+            {
+                Console.WriteLine("[TIMEOUT] Nenhuma mensagem recebida após 30 segundos.");
+                cts.Cancel();
             }
         }
-        catch (OperationCanceledException)
+        catch (ProduceException<string, string> ex)
         {
-            Console.WriteLine("[STOP] Encerrando consumidor...");
+            Console.WriteLine($"[ERROR][PRODUCE] {ex.Error.Reason}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR][GENERAL] {ex.Message}");
         }
         finally
         {
