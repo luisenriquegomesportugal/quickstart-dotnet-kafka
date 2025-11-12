@@ -47,8 +47,8 @@ class Consumer
         Console.WriteLine($"[SUBSCRIBE] Ouvindo o tópico: {KAFKA_TOPIC}");
 
         // 🕒 Aguarda 5 segundos antes de enviar mensagem
-        Console.WriteLine("[WAIT] Aguardando 5 segundos antes de enviar mensagem...");
-        await Task.Delay(5000);
+        Console.WriteLine("[WAIT] Aguardando 2 segundos antes de enviar mensagem...");
+        await Task.Delay(2000);
 
         var message = $"[AUTO] Mensagem enviada automaticamente às {DateTime.UtcNow:O}";
         Console.WriteLine($"[PRODUCE] Enviando mensagem: {message}");
@@ -67,8 +67,6 @@ class Consumer
         {
             Console.WriteLine($"[ERROR][PRODUCE] {ex.Error.Reason}");
         }
-
-        Console.WriteLine("[LISTENING] Aguardando mensagens do tópico...");
 
         // 🔁 Loop contínuo de escuta
         try
