@@ -66,9 +66,6 @@ class Consumer
         catch (ProduceException<string, string> ex)
         {
             Console.WriteLine($"[ERROR][PRODUCE] {ex.Error.Reason}");
-            
-            consumer.Close();
-            Console.WriteLine("[CLOSE] Conexão encerrada.");
         }
 
         // 🔁 Loop contínuo de escuta
