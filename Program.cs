@@ -42,43 +42,19 @@ class Consumer
         using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
         using var producer = new ProducerBuilder<string, string>(producerConfig).Build();
 
+        Console.WriteLine("[CONNECT] Conectando ao Kafka...");
+        consumer.Subscribe(KAFKA_TOPIC);
+        Console.WriteLine($"[SUBSCRIBE] Ouvindo o tópico: {KAFKA_TOPIC}");
+
+        // 🕒 Aguarda 5 segundos antes de enviar mensagem
+        Console.WriteLine("[WAIT] Aguardando 5 segundos antes de enviar mensagem...");
+        await Task.Delay(5000);
+
+        var message = $"[AUTO] Mensagem enviada automaticamente às {DateTime.UtcNow:O}";
+        Console.WriteLine($"[PRODUCE] Enviando mensagem: {message}");
+
         try
         {
-            Console.WriteLine("[CONNECT] Conectando ao Kafka...");
-            consumer.Subscribe(KAFKA_TOPIC);
-            Console.WriteLine($"[SUBSCRIBE] Ouvindo o tópico: {KAFKA_TOPIC}");
-
-            // 🔁 Tarefa para consumir mensagens (paralelamente)
-            var cts = new CancellationTokenSource();
-            var consumeTask = Task.Run(() =>
-            {
-                try
-                {
-                    while (!cts.Token.IsCancellationRequested)
-                    {
-                        var cr = consumer.Consume(cts.Token);
-                        if (cr?.Message != null)
-                        {
-                            Console.WriteLine($"[MESSAGE RECEIVED] Offset: {cr.Offset}, Key: {cr.Message.Key ?? "(null)"}, Value: {cr.Message.Value}");
-                            cts.Cancel(); // Encerra após primeira mensagem
-                            break;
-                        }
-                    }
-                }
-                catch (OperationCanceledException) { /* esperado */ }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[ERROR][CONSUME] {ex.Message}");
-                }
-            });
-
-            // ⏱️ Espera 5 segundos antes de enviar a mensagem
-            Console.WriteLine("[WAIT] Aguardando 5 segundos antes de enviar mensagem...");
-            await Task.Delay(5000);
-
-            var message = $"[AUTO] Mensagem enviada automaticamente às {DateTime.UtcNow:O}";
-            Console.WriteLine($"[PRODUCE] Enviando mensagem: {message}");
-
             var dr = await producer.ProduceAsync(KAFKA_TOPIC, new Message<string, string>
             {
                 Key = "auto",
@@ -86,23 +62,35 @@ class Consumer
             });
 
             Console.WriteLine($"[DELIVERED] Mensagem publicada em {dr.TopicPartitionOffset}");
-
-            // 🔚 Aguarda até receber uma mensagem ou tempo limite
-            await Task.WhenAny(consumeTask, Task.Delay(30000));
-
-            if (!consumeTask.IsCompleted)
-            {
-                Console.WriteLine("[TIMEOUT] Nenhuma mensagem recebida após 30 segundos.");
-                cts.Cancel();
-            }
         }
         catch (ProduceException<string, string> ex)
         {
             Console.WriteLine($"[ERROR][PRODUCE] {ex.Error.Reason}");
         }
-        catch (Exception ex)
+
+        Console.WriteLine("[LISTENING] Aguardando mensagens do tópico...");
+
+        // 🔁 Loop contínuo de escuta
+        try
         {
-            Console.WriteLine($"[ERROR][GENERAL] {ex.Message}");
+            var receivedMessage = false;
+            while (!receivedMessage)
+            {
+                var cr = consumer.Consume();
+                if (cr?.Message != null)
+                {
+                    Console.WriteLine($"[MESSAGE RECEIVED] Offset: {cr.Offset}, Key: {cr.Message.Key ?? "(null)"}, Value: {cr.Message.Value}");
+                    receivedMessage = true;
+                }
+            }
+        }
+        catch (ConsumeException ex)
+        {
+            Console.WriteLine($"[ERROR][CONSUME] {ex.Error.Reason}");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("[STOP] Execução cancelada pelo usuário.");
         }
         finally
         {
