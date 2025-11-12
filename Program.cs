@@ -90,10 +90,5 @@ class Consumer
         {
             Console.WriteLine("[STOP] Execução cancelada pelo usuário.");
         }
-        finally
-        {
-            consumer.Close();
-            Console.WriteLine("[CLOSE] Conexão encerrada.");
-        }
     }
 }
