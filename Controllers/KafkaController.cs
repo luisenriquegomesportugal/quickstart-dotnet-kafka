@@ -55,7 +55,7 @@ public class KafkaController : ControllerBase
 
                 SecurityProtocol = SecurityProtocol.SaslSsl,
 
-                SaslMechanism = SaslMechanism.Plain,
+                SaslMechanism = SaslMechanism.ScramSha512,
 
                 SaslUsername = _username,
 
@@ -95,7 +95,7 @@ public class KafkaController : ControllerBase
 
                 SecurityProtocol = SecurityProtocol.SaslSsl,
 
-                SaslMechanism = SaslMechanism.Plain,
+                SaslMechanism = SaslMechanism.ScramSha512,
 
                 SaslUsername = _username,
 
