@@ -1,0 +1,157 @@
+﻿using Confluent.Kafka;
+using Microsoft.AspNetCore.Mvc;
+
+namespace dotnet_webapi.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class KafkaController : ControllerBase
+{
+    private readonly string _bootstrapServers;
+    private readonly string _topic;
+    private readonly string _groupId;
+    private readonly string _username;
+    private readonly string _password;
+    private readonly string _sslCaLocation;
+
+    public KafkaController()
+    {
+        _bootstrapServers =
+            Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS")
+            ?? throw new Exception("KAFKA_BOOTSTRAP_SERVERS not configured");
+
+        _topic =
+            Environment.GetEnvironmentVariable("KAFKA_TOPIC")
+            ?? "teste-topic";
+
+        _groupId =
+            Environment.GetEnvironmentVariable("KAFKA_GROUP_ID")
+            ?? "dotnet-group";
+
+        _username =
+            Environment.GetEnvironmentVariable("KAFKA_USERNAME")
+            ?? throw new Exception("KAFKA_USERNAME not configured");
+
+        _password =
+            Environment.GetEnvironmentVariable("KAFKA_PASSWORD")
+            ?? throw new Exception("KAFKA_PASSWORD not configured");
+
+        _sslCaLocation =
+            Environment.GetEnvironmentVariable("KAFKA_CA_LOCATION")
+            ?? "/etc/kafka/certs/ca.crt";
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        try
+        {
+            var message =
+                $"Mensagem enviada em {DateTime.UtcNow:O}";
+
+            var producerConfig = new ProducerConfig
+            {
+                BootstrapServers = _bootstrapServers,
+
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+
+                SaslMechanism = SaslMechanism.Plain,
+
+                SaslUsername = _username,
+
+                SaslPassword = _password,
+
+                SslCaLocation = _sslCaLocation,
+
+                SslEndpointIdentificationAlgorithm =
+                    SslEndpointIdentificationAlgorithm.None
+            };
+
+            DeliveryResult<Null, string> produceResult;
+
+            using (var producer =
+                   new ProducerBuilder<Null, string>(producerConfig)
+                   .Build())
+            {
+                produceResult = await producer.ProduceAsync(
+                    _topic,
+                    new Message<Null, string>
+                    {
+                        Value = message
+                    });
+
+                producer.Flush(TimeSpan.FromSeconds(10));
+            }
+
+            var consumerConfig = new ConsumerConfig
+            {
+                BootstrapServers = _bootstrapServers,
+
+                GroupId = _groupId,
+
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+
+                EnableAutoCommit = false,
+
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+
+                SaslMechanism = SaslMechanism.Plain,
+
+                SaslUsername = _username,
+
+                SaslPassword = _password,
+
+                SslCaLocation = _sslCaLocation,
+
+                SslEndpointIdentificationAlgorithm =
+                    SslEndpointIdentificationAlgorithm.None
+            };
+
+            ConsumeResult<Ignore, string>? consumeResult;
+
+            using (var consumer =
+                   new ConsumerBuilder<Ignore, string>(consumerConfig)
+                   .Build())
+            {
+                consumer.Subscribe(_topic);
+
+                consumeResult =
+                    consumer.Consume(TimeSpan.FromSeconds(10));
+
+                consumer.Close();
+            }
+
+            return Ok(new
+            {
+                success = true,
+
+                producer = new
+                {
+                    topic = produceResult.Topic,
+                    partition = produceResult.Partition.Value,
+                    offset = produceResult.Offset.Value,
+                    value = message
+                },
+
+                consumer = consumeResult == null
+                    ? null
+                    : new
+                    {
+                        topic = consumeResult.Topic,
+                        partition = consumeResult.Partition.Value,
+                        offset = consumeResult.Offset.Value,
+                        value = consumeResult.Message.Value
+                    }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                success = false,
+                error = ex.Message,
+                stacktrace = ex.StackTrace
+            });
+        }
+    }
+}
