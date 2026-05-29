@@ -7,6 +7,8 @@ namespace dotnet_webapi.Controllers;
 [Route("[controller]")]
 public class KafkaController : ControllerBase
 {
+    private readonly ILogger<KafkaController> _logger;
+
     private readonly string _bootstrapServers;
     private readonly string _topic;
     private readonly string _groupId;
@@ -14,8 +16,10 @@ public class KafkaController : ControllerBase
     private readonly string _password;
     private readonly string _sslCaLocation;
 
-    public KafkaController()
+    public KafkaController(ILogger<KafkaController> logger)
     {
+        _logger = logger;
+
         _bootstrapServers =
             Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS")
             ?? throw new Exception("KAFKA_BOOTSTRAP_SERVERS not configured");
@@ -44,6 +48,10 @@ public class KafkaController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get()
     {
+        _logger.LogInformation(
+            "Iniciando teste Kafka em {DateTime}",
+            DateTime.UtcNow);
+
         try
         {
             var message =
@@ -67,6 +75,10 @@ public class KafkaController : ControllerBase
                     SslEndpointIdentificationAlgorithm.None
             };
 
+            _logger.LogInformation(
+                "Produzindo mensagem no tópico {Topic}",
+                _topic);
+
             DeliveryResult<Null, string> produceResult;
 
             using (var producer =
@@ -82,6 +94,11 @@ public class KafkaController : ControllerBase
 
                 producer.Flush(TimeSpan.FromSeconds(10));
             }
+
+            _logger.LogInformation(
+                "Mensagem produzida com sucesso. Partition={Partition} Offset={Offset}",
+                produceResult.Partition.Value,
+                produceResult.Offset.Value);
 
             var consumerConfig = new ConsumerConfig
             {
@@ -113,12 +130,28 @@ public class KafkaController : ControllerBase
                    new ConsumerBuilder<Ignore, string>(consumerConfig)
                    .Build())
             {
+                _logger.LogInformation(
+                    "Consumindo mensagens do tópico {Topic}",
+                    _topic);
+
                 consumer.Subscribe(_topic);
 
                 consumeResult =
                     consumer.Consume(TimeSpan.FromSeconds(10));
 
                 consumer.Close();
+            }
+
+            if (consumeResult != null)
+            {
+                _logger.LogInformation(
+                    "Mensagem consumida com sucesso. Offset={Offset}",
+                    consumeResult.Offset.Value);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Nenhuma mensagem foi consumida");
             }
 
             return Ok(new
@@ -146,11 +179,14 @@ public class KafkaController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Erro ao executar operação Kafka");
+
             return StatusCode(500, new
             {
                 success = false,
-                error = ex.Message,
-                stacktrace = ex.StackTrace
+                error = ex.Message
             });
         }
     }
