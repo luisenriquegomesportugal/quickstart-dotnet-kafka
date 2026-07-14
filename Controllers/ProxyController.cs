@@ -17,7 +17,8 @@ public class ProxyController : ControllerBase
     public async Task<IActionResult> Get()
     {
         var response = await _httpClient.GetAsync(
-            "https://jsonplaceholder.typicode.com/todos/1"
+            Environment.GetEnvironmentVariable("PROXY_URL")
+                ?? "https://jsonplaceholder.typicode.com/todos/1"
         );
 
         var content = await response.Content.ReadAsStringAsync();
